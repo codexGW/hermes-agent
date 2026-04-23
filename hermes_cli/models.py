@@ -201,6 +201,13 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
     "copilot-acp": [
         "copilot-acp",
     ],
+    "claude-cli": [
+        "claude-opus-4.7",
+        "claude-opus-4.6",
+        "claude-sonnet-4.6",
+        "claude-sonnet-4.5",
+        "claude-haiku-4.5",
+    ],
     "copilot": [
         "gpt-5.4",
         "gpt-5.4-mini",
@@ -770,6 +777,7 @@ CANONICAL_PROVIDERS: list[ProviderEntry] = [
     ProviderEntry("openrouter",     "OpenRouter",               "OpenRouter (100+ models, pay-per-use)"),
     ProviderEntry("ai-gateway",     "Vercel AI Gateway",        "Vercel AI Gateway (200+ models, $5 free credit, no markup)"),
     ProviderEntry("anthropic",      "Anthropic",                "Anthropic (Claude models — API key or Claude Code)"),
+    ProviderEntry("claude-cli",     "Claude CLI",               "Claude CLI (uses local Claude Code / Max/Pro subscription path)"),
     ProviderEntry("openai-codex",   "OpenAI Codex",             "OpenAI Codex"),
     ProviderEntry("xiaomi",         "Xiaomi MiMo",              "Xiaomi MiMo (MiMo-V2.5 and V2 models — pro, omni, flash)"),
     ProviderEntry("tencent-tokenhub", "Tencent TokenHub",       "Tencent TokenHub (Hy3 Preview — direct API via tokenhub.tencentmaas.com)"),
@@ -832,6 +840,7 @@ _PROVIDER_ALIASES = {
     "minimax_cn": "minimax-cn",
     "claude": "anthropic",
     "claude-code": "anthropic",
+    "claude-code-cli": "claude-cli",
     "deep-seek": "deepseek",
     "opencode": "opencode-zen",
     "zen": "opencode-zen",
@@ -1579,7 +1588,10 @@ def detect_static_provider_for_model(
 
     # --- Step 1: check static provider catalogs for a direct match ---
     for pid, models in _PROVIDER_MODELS.items():
-        if pid in current_keys or pid in _AGGREGATOR_PROVIDERS:
+        # Claude CLI is an explicit provider lane, not the canonical owner of
+        # bare Claude model names. Preserve OpenRouter slugging for inputs like
+        # `claude-opus-4.6` unless the user explicitly selected `claude-cli`.
+        if pid in current_keys or pid in _AGGREGATOR_PROVIDERS or pid == "claude-cli":
             continue
         if any(name_lower == m.lower() for m in models):
             return (pid, name)
@@ -1916,6 +1928,8 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
             pass
         if normalized == "copilot-acp":
             return list(_PROVIDER_MODELS.get("copilot", []))
+    if normalized == "claude-cli":
+        return list(_PROVIDER_MODELS.get("claude-cli", []))
     if normalized == "nous":
         # Try live Nous Portal /models endpoint
         try:
