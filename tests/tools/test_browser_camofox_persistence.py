@@ -34,7 +34,7 @@ def _mock_response(status=200, json_data=None):
 def _enable_persistence():
     """Return a patch context that enables managed persistence via config."""
     config = {"browser": {"camofox": {"managed_persistence": True}}}
-    return patch("tools.browser_camofox.load_config", return_value=config)
+    return patch("tools.browser_camofox.hermes_config.load_config", return_value=config)
 
 
 @pytest.fixture(autouse=True)
@@ -50,21 +50,21 @@ def _clear_session_state():
 class TestManagedPersistenceToggle:
     def test_disabled_by_default(self):
         config = {"browser": {"camofox": {"managed_persistence": False}}}
-        with patch("tools.browser_camofox.load_config", return_value=config):
+        with patch("tools.browser_camofox.hermes_config.load_config", return_value=config):
             assert _managed_persistence_enabled() is False
 
     def test_enabled_via_config_yaml(self):
         config = {"browser": {"camofox": {"managed_persistence": True}}}
-        with patch("tools.browser_camofox.load_config", return_value=config):
+        with patch("tools.browser_camofox.hermes_config.load_config", return_value=config):
             assert _managed_persistence_enabled() is True
 
     def test_disabled_when_key_missing(self):
         config = {"browser": {}}
-        with patch("tools.browser_camofox.load_config", return_value=config):
+        with patch("tools.browser_camofox.hermes_config.load_config", return_value=config):
             assert _managed_persistence_enabled() is False
 
     def test_disabled_on_config_load_error(self):
-        with patch("tools.browser_camofox.load_config", side_effect=Exception("fail")):
+        with patch("tools.browser_camofox.hermes_config.load_config", side_effect=Exception("fail")):
             assert _managed_persistence_enabled() is False
 
 
@@ -265,7 +265,7 @@ class TestCamofoxSoftCleanup:
 
         _get_session("task-1")
         config = {"browser": {"camofox": {"managed_persistence": False}}}
-        with patch("tools.browser_camofox.load_config", return_value=config):
+        with patch("tools.browser_camofox.hermes_config.load_config", return_value=config):
             result = camofox_soft_cleanup("task-1")
 
         assert result is False
